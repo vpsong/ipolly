@@ -187,8 +187,9 @@ public class TcpProcessor implements Processor {
 		SocketChannel socketChannel = session.getSocketChannel();
 		ByteBuffer buffer = ByteBuffer.allocate(DEFAULT_BYTEBUFFER_SIZE);
 		try {
-			socketChannel.read(buffer);
-			session.getHandler().received(new String(buffer.array()));
+			while (socketChannel.read(buffer) > 0) {
+				session.getHandler().received(new String(buffer.array()));
+			}
 		} catch (IOException e) {
 			remove(session);
 			e.printStackTrace();
@@ -212,7 +213,8 @@ public class TcpProcessor implements Processor {
 		try {
 			while (!writeQueue.isEmpty()) {
 				Object msg = writeQueue.poll();
-				ByteBuffer buffer = ByteBuffer.wrap(String.valueOf(msg).getBytes());
+				ByteBuffer buffer = ByteBuffer.wrap(String.valueOf(msg)
+						.getBytes());
 				socketChannel.write(buffer);
 				session.getHandler().writed(new String(buffer.array()));
 			}
