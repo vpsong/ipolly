@@ -13,6 +13,7 @@ import java.util.logging.Logger;
 import vp.ipolly.handler.Handler;
 import vp.ipolly.service.Acceptor;
 import vp.ipolly.service.Processor;
+import vp.ipolly.service.common.ExecutorThreadPool;
 
 /**
  * 
@@ -61,7 +62,7 @@ public class TcpAcceptor implements Acceptor {
 			}
 			running = true;
 			worker = new Worker();
-			new Thread(worker).start();
+			ExecutorThreadPool.getExecutor().execute(worker);
 			logger.info("server has started up");
 		}
 	}

@@ -13,8 +13,10 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
+import vp.ipolly.filter.FilterChain;
 import vp.ipolly.service.Processor;
 import vp.ipolly.service.Session;
+import vp.ipolly.service.common.ExecutorThreadPool;
 
 /**
  * 
@@ -36,7 +38,7 @@ public class TcpProcessor implements Processor {
 	private BlockingQueue<Session> writeSessionQueue = new LinkedBlockingQueue<Session>();
 	private BlockingQueue<Session> readSessionQueue = new LinkedBlockingQueue<Session>();
 	private static final int DEFAULT_BYTEBUFFER_SIZE = 2048;
-	private static final int SELECT_TIMEOUT = 3000;
+	private static final int SELECT_TIMEOUT = 1000;
 	private Worker worker;
 	private Reader reader;
 	private Writer writer;
@@ -56,11 +58,11 @@ public class TcpProcessor implements Processor {
 			}
 			running = true;
 			worker = new Worker();
-			new Thread(worker).start();
+			ExecutorThreadPool.getExecutor().execute(worker);
 			reader = new Reader();
-			new Thread(reader).start();
+			ExecutorThreadPool.getExecutor().execute(reader);
 			writer = new Writer();
-			new Thread(writer).start();
+			ExecutorThreadPool.getExecutor().execute(writer);
 			logger.info(name + " has started up");
 		}
 	}
@@ -184,18 +186,7 @@ public class TcpProcessor implements Processor {
 		if (!session.isConncted()) {
 			return;
 		}
-		SocketChannel socketChannel = session.getSocketChannel();
-		ByteBuffer buffer = ByteBuffer.allocate(DEFAULT_BYTEBUFFER_SIZE);
-		try {
-			while (socketChannel.read(buffer) > 0) {
-				session.getHandler().received(new String(buffer.array()));
-			}
-		} catch (IOException e) {
-			remove(session);
-			e.printStackTrace();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		session.getFilterChain().read(session, null);
 	}
 
 	private void processWrite() {
@@ -208,21 +199,10 @@ public class TcpProcessor implements Processor {
 		if (!session.isConncted()) {
 			return;
 		}
-		SocketChannel socketChannel = session.getSocketChannel();
 		Queue<Object> writeQueue = session.getWriteQueue();
-		try {
-			while (!writeQueue.isEmpty()) {
-				Object msg = writeQueue.poll();
-				ByteBuffer buffer = ByteBuffer.wrap(String.valueOf(msg)
-						.getBytes());
-				socketChannel.write(buffer);
-				session.getHandler().writed(new String(buffer.array()));
-			}
-		} catch (IOException e) {
-			remove(session);
-			e.printStackTrace();
-		} catch (Exception e) {
-			e.printStackTrace();
+		while (!writeQueue.isEmpty()) {
+			Object msg = writeQueue.poll();
+			session.getFilterChain().send(session, msg);
 		}
 		SelectionKey key = session.getSelectionKey();
 		key.interestOps(key.interestOps() & (~SelectionKey.OP_WRITE));

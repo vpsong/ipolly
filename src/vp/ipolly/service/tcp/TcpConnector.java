@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 import vp.ipolly.handler.Handler;
 import vp.ipolly.service.Connector;
 import vp.ipolly.service.Processor;
+import vp.ipolly.service.common.ExecutorThreadPool;
 
 /**
  * 
@@ -60,7 +61,7 @@ public class TcpConnector implements Connector {
 			}
 			running = true;
 			worker = new Worker();
-			new Thread(worker).start();
+			ExecutorThreadPool.getExecutor().execute(worker);
 			logger.info("client has started up");
 		}
 	}

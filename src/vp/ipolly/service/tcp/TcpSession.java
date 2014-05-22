@@ -1,12 +1,11 @@
 package vp.ipolly.service.tcp;
 
-import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
-import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import vp.ipolly.filter.FilterChain;
 import vp.ipolly.handler.Handler;
 import vp.ipolly.service.Processor;
 import vp.ipolly.service.Session;
@@ -49,7 +48,7 @@ public class TcpSession implements Session {
 		if(selectionKey.isValid()) {
 			return true;
 		}
-		processor.remove(this);
+		close();
 		return false;
 	}
 	
@@ -65,7 +64,7 @@ public class TcpSession implements Session {
 		if(socketChannel.isConnected()) {
 			return true;
 		}
-		processor.remove(this);
+		close();
 		return false;
 	}
 
@@ -87,6 +86,16 @@ public class TcpSession implements Session {
 
 	public void setProcessor(Processor processor) {
 		this.processor = processor;
+	}
+
+	@Override
+	public void close() {
+		processor.remove(this);
+	}
+
+	@Override
+	public FilterChain getFilterChain() {
+		return FilterChain.getChain();
 	}
 	
 }

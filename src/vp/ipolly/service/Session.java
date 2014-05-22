@@ -4,6 +4,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.Queue;
 
+import vp.ipolly.filter.FilterChain;
 import vp.ipolly.handler.Handler;
 
 /**
@@ -34,4 +35,8 @@ public interface Session {
 	void write(Object obj);
 	
 	boolean isConncted();
+	
+	void close();
+	
+	FilterChain getFilterChain();
 }
