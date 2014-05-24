@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 import vp.ipolly.handler.Handler;
 import vp.ipolly.service.Connector;
 import vp.ipolly.service.Processor;
+import vp.ipolly.service.Session;
 import vp.ipolly.service.common.ExecutorThreadPool;
 
 /**
@@ -31,8 +32,8 @@ public class TcpConnector implements Connector {
 	private Processor[] processorArray;
 	private static final int processorSize = 3;
 	private int processCount;
-	private static final int DEFAULT_BYTEBUFFER_SIZE = 2048;
 	private Worker worker;
+	private Session session;
 
 	public TcpConnector(InetSocketAddress address, Handler handler) {
 		this.serverAddress = address;
@@ -45,25 +46,28 @@ public class TcpConnector implements Connector {
 		}
 	}
 
-	public synchronized void startup() {
+	public synchronized Session connect() {
 		if (!running) {
+			running = true;
 			try {
 				selector = Selector.open();
 				socketChannel.register(selector, SelectionKey.OP_CONNECT);
 				socketChannel.connect(serverAddress);
-				processorArray = new TcpProcessor[processorSize];
-				for (int i = 0; i < processorSize; ++i) {
-					processorArray[i] = new TcpProcessor();
-					processorArray[i].startup();
-				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			running = true;
+			processorArray = new TcpProcessor[processorSize];
+			for (int i = 0; i < processorSize; ++i) {
+				processorArray[i] = new TcpProcessor();
+				processorArray[i].startup();
+			}
 			worker = new Worker();
 			ExecutorThreadPool.getExecutor().execute(worker);
 			logger.info("client has started up");
+			session = new TcpSession(socketChannel, handler);
+			nextProcessor().addNew(session);
 		}
+		return session;
 	}
 
 	public synchronized void shutdown() {
@@ -95,8 +99,10 @@ public class TcpConnector implements Connector {
 	private void handle(SelectionKey selectionKey) {
 		if (selectionKey.isConnectable()) {
 			try {
-				if (socketChannel.isConnectionPending() && socketChannel.finishConnect()) {
-					nextProcessor().addNew(new TcpSession(socketChannel, handler));
+				if (socketChannel.isConnectionPending()
+						&& socketChannel.finishConnect()) {
+					// nextProcessor().addNew(new TcpSession(socketChannel,
+					// handler));
 					handler.connected();
 				}
 			} catch (IOException e) {

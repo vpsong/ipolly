@@ -7,15 +7,15 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import vp.ipolly.filter.FilterChain;
 import vp.ipolly.handler.Handler;
+import vp.ipolly.service.BaseSession;
 import vp.ipolly.service.Processor;
-import vp.ipolly.service.Session;
 
 /**
  * 
  * @author vpsong
  * 
  */
-public class TcpSession implements Session {
+public class TcpSession extends BaseSession {
 
 	private SocketChannel socketChannel;
 	private Handler handler;
@@ -43,25 +43,25 @@ public class TcpSession implements Session {
 		writeQueue.add(obj);
 		processor.regWriteOps(this);
 	}
-	
+
 	private boolean checkValid() {
-		if(selectionKey.isValid()) {
+		if (selectionKey.isValid()) {
 			return true;
 		}
 		close();
 		return false;
 	}
-	
+
 	public boolean isReadable() {
 		return checkValid() && selectionKey.isReadable();
 	}
-	
+
 	public boolean isWritable() {
 		return checkValid() && selectionKey.isWritable();
 	}
-	
+
 	public boolean isConncted() {
-		if(socketChannel.isConnected()) {
+		if (socketChannel.isConnected()) {
 			return true;
 		}
 		close();
@@ -97,5 +97,5 @@ public class TcpSession implements Session {
 	public FilterChain getFilterChain() {
 		return FilterChain.getChain();
 	}
-	
+
 }

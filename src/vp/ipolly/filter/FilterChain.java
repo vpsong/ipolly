@@ -14,10 +14,12 @@ public class FilterChain {
 	private Filter headFilter;
 	
 	private FilterChain() {
-		headFilter = new LoggingFilter();
+		headFilter = new ReadFilter();
 		BlackListFilter blackListFilter = new BlackListFilter();
 		headFilter.setNextFilter(blackListFilter);
-		blackListFilter.setNextFilter(new IOFilter());
+		LoggingFilter loggingFilter = new LoggingFilter();
+		blackListFilter.setNextFilter(loggingFilter);
+		loggingFilter.setNextFilter(new WriteFilter());
 	}
 	
 	public void read(Session session, Object message) {

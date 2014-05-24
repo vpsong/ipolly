@@ -31,19 +31,17 @@ public class BlackListFilter extends FilterAdaptor {
 	}
 	
 	@Override
-	public int read(Session session, Object message) {
+	public void read(Session session, Object message) {
 		if(!inBlackList(session)) {
-			return nextFilter().read(session, message);
+			nextFilter().read(session, message);
 		}
-		return -1;
 	}
 
 	@Override
-	public int send(Session session, Object message) {
+	public void send(Session session, Object message) {
 		if(!inBlackList(session)) {
-			return nextFilter().send(session, message);
+			nextFilter().send(session, message);
 		}
-		return -1;
 	}
 
 }

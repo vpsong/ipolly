@@ -32,7 +32,6 @@ public class TcpAcceptor implements Acceptor {
 	private Processor[] processorArray;
 	private static final int processorSize = 3;
 	private int processCount;
-	private static final int DEFAULT_BYTEBUFFER_SIZE = 2048;
 	private Worker worker;
 
 	public TcpAcceptor(int port, Handler handler) {
@@ -48,19 +47,19 @@ public class TcpAcceptor implements Acceptor {
 
 	public synchronized void startup() {
 		if (!running) {
+			running = true;
 			try {
 				selector = Selector.open();
 				serverSocketChannel.configureBlocking(false);
 				serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
-				processorArray = new TcpProcessor[processorSize];
-				for (int i = 0; i < processorSize; ++i) {
-					processorArray[i] = new TcpProcessor();
-					processorArray[i].startup();
-				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			running = true;
+			processorArray = new TcpProcessor[processorSize];
+			for (int i = 0; i < processorSize; ++i) {
+				processorArray[i] = new TcpProcessor();
+				processorArray[i].startup();
+			}
 			worker = new Worker();
 			ExecutorThreadPool.getExecutor().execute(worker);
 			logger.info("server has started up");

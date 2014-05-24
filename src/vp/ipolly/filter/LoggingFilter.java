@@ -15,18 +15,15 @@ public class LoggingFilter extends FilterAdaptor {
 			.getSimpleName());
 
 	@Override
-	public int read(Session session, Object message) {
-		int bytes = nextFilter().read(session, message);
-		if (bytes > 0) {
-			logger.info("receive:" + String.valueOf(message));
-		}
-		return bytes;
+	public void read(Session session, Object message) {
+		logger.info("receive: " + String.valueOf(message));
+		nextFilter().read(session, message);
 	}
 
 	@Override
-	public int send(Session session, Object message) {
-		logger.info("send:" + String.valueOf(message));
-		return nextFilter().send(session, message);
+	public void send(Session session, Object message) {
+		logger.info("send: " + String.valueOf(message));
+		nextFilter().send(session, message);
 	}
 
 }

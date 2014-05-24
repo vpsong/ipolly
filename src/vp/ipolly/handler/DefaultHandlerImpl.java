@@ -1,5 +1,7 @@
 package vp.ipolly.handler;
 
+import vp.ipolly.service.Session;
+
 /**
  * 
  * @author vp.song
@@ -18,13 +20,11 @@ public class DefaultHandlerImpl extends HandlerAdapter {
 	}
 
 	@Override
-	public void received(Object message) throws Exception {
-		System.out.println("recieve: " + message);
+	public void received(Session session, Object message) throws Exception {
 	}
 
 	@Override
-	public void writed(Object message) throws Exception {
-		System.out.println("write: " + message);
+	public void writed(Session session, Object message) throws Exception {
 	}
 	
 }

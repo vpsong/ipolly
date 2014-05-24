@@ -1,5 +1,7 @@
 package vp.ipolly.handler;
 
+import vp.ipolly.service.Session;
+
 public class HandlerAdapter implements Handler {
 	
 	@Override
@@ -11,11 +13,11 @@ public class HandlerAdapter implements Handler {
 	}
 
 	@Override
-	public void received(Object message) throws Exception {
+	public void received(Session session, Object message) throws Exception {
 	}
 
 	@Override
-	public void writed(Object message) throws Exception {
+	public void writed(Session session, Object message) throws Exception {
 	}
 
 }

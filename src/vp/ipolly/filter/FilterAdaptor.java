@@ -12,13 +12,17 @@ public class FilterAdaptor implements Filter {
 	private Filter nextFilter;
 
 	@Override
-	public int read(Session session, Object message) {
-		return 0;
+	public void read(Session session, Object message) {
+		if (nextFilter != null) {
+			nextFilter.read(session, message);
+		}
 	}
 
 	@Override
-	public int send(Session session, Object message) {
-		return 0;
+	public void send(Session session, Object message) {
+		if (nextFilter != null) {
+			nextFilter.send(session, message);
+		}
 	}
 
 	@Override

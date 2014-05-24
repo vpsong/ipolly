@@ -101,7 +101,6 @@ public class TcpProcessor implements Processor {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			session.write("I love you, 520");
 		}
 	}
 
@@ -136,20 +135,6 @@ public class TcpProcessor implements Processor {
 		selectionKeys.clear();
 	}
 
-	// private void read(Session session) {
-	// SocketChannel socketChannel = session.getSocketChannel();
-	// ByteBuffer buffer = ByteBuffer.allocate(DEFAULT_BYTEBUFFER_SIZE);
-	// try {
-	// socketChannel.read(buffer);
-	// session.getHandler().received(new String(buffer.array()));
-	// } catch (IOException e) {
-	// remove(session);
-	// e.printStackTrace();
-	// } catch (Exception e) {
-	// e.printStackTrace();
-	// }
-	// }
-
 	public void regWriteOps(Session session) {
 		regWriteSessionQueue.add(session);
 	}
@@ -165,16 +150,6 @@ public class TcpProcessor implements Processor {
 	private void wakeup() {
 		selector.wakeup();
 	}
-
-	// private void write(Session session) {
-	// SelectionKey key = session.getSelectionKey();
-	// key.interestOps(key.interestOps() & (~SelectionKey.OP_WRITE));
-	//
-	// SocketChannel ch = session.getSocketChannel();
-	// Queue<Object> writeRequestQueue = session.getWriteQueue();
-	//
-	// key.interestOps(key.interestOps() | SelectionKey.OP_WRITE);
-	// }
 
 	private void processRead() {
 		Session session = null;

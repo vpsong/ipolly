@@ -39,4 +39,16 @@ public interface Session {
 	void close();
 	
 	FilterChain getFilterChain();
+	
+	long increaseReadBytes(int increment);
+    
+    long increaseWrittenBytes(int increment);
+
+	long getReadBytes();
+
+	long getWrittenBytes();
+
+	long getLastReadTime();
+
+	long getLastWriteTime();
 }
