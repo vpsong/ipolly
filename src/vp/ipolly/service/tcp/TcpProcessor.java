@@ -16,6 +16,8 @@ import java.util.logging.Logger;
 import vp.ipolly.filter.FilterChain;
 import vp.ipolly.service.Processor;
 import vp.ipolly.service.Session;
+import vp.ipolly.service.SessionState;
+import vp.ipolly.service.common.Data;
 import vp.ipolly.service.common.ExecutorThreadPool;
 
 /**
@@ -37,8 +39,7 @@ public class TcpProcessor implements Processor {
 	private Queue<Session> regWriteSessionQueue = new ConcurrentLinkedQueue<Session>();
 	private BlockingQueue<Session> writeSessionQueue = new LinkedBlockingQueue<Session>();
 	private BlockingQueue<Session> readSessionQueue = new LinkedBlockingQueue<Session>();
-	private static final int DEFAULT_BYTEBUFFER_SIZE = 2048;
-	private static final int SELECT_TIMEOUT = 1000;
+	private long lastProcessIdleTime;
 	private Worker worker;
 	private Reader reader;
 	private Writer writer;
@@ -86,37 +87,37 @@ public class TcpProcessor implements Processor {
 		newSessionQueue.add(session);
 	}
 
-	public void remove(Session session) {
+	public void scheduledRemove(Session session) {
 		removeSessionQueue.add(session);
 	}
 
 	private void processNew() {
 		while (!newSessionQueue.isEmpty()) {
 			Session session = newSessionQueue.poll();
-			SocketChannel socketChannel = session.getSocketChannel();
-			try {
-				socketChannel.configureBlocking(false);
-				session.setSelectionKey(socketChannel.register(selector,
-						SelectionKey.OP_READ, session));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			session.init();
 		}
 	}
 
 	private void processRemove() {
 		while (!removeSessionQueue.isEmpty()) {
 			Session session = removeSessionQueue.poll();
-			SelectionKey key = session.getSelectionKey();
-			if (key != null) {
-				key.cancel();
+			session.close();
+		}
+	}
+
+	private void processIdle() {
+		long nowTime = System.currentTimeMillis();
+		if (nowTime - lastProcessIdleTime > PROCESS_IDLE_INTERVAL) {
+			lastProcessIdleTime = nowTime;
+			Set<SelectionKey> keySet = selector.keys();
+			if (keySet == null) {
+				return;
 			}
-			SocketChannel socketChannel = session.getSocketChannel();
-			if (socketChannel != null) {
-				try {
-					socketChannel.close();
-				} catch (IOException e) {
-					e.printStackTrace();
+			for (SelectionKey key : keySet) {
+				Session session = (Session) key.attachment();
+				if ((nowTime - session.getLastReadTime() > IDLE_TIMEOUT)
+						&& (nowTime - session.getLastWriteTime() > IDLE_TIMEOUT)) {
+					session.getFilterChain().idle(session);
 				}
 			}
 		}
@@ -147,10 +148,6 @@ public class TcpProcessor implements Processor {
 		}
 	}
 
-	private void wakeup() {
-		selector.wakeup();
-	}
-
 	private void processRead() {
 		Session session = null;
 		try {
@@ -161,7 +158,7 @@ public class TcpProcessor implements Processor {
 		if (!session.isConncted()) {
 			return;
 		}
-		session.getFilterChain().read(session, null);
+		session.getFilterChain().read(session);
 	}
 
 	private void processWrite() {
@@ -217,6 +214,7 @@ public class TcpProcessor implements Processor {
 				processNew();
 				updateOps();
 				doSelect();
+				processIdle();
 				processRemove();
 			}
 		}
@@ -246,4 +244,9 @@ public class TcpProcessor implements Processor {
 		}
 
 	}
+
+	public Selector getSelector() {
+		return selector;
+	}
+
 }

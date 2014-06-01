@@ -9,6 +9,6 @@ public interface Connector {
 	
 	Session connect();
 
-	void shutdown();
+	void disconnect();
 }
 

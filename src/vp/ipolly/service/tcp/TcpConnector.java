@@ -28,10 +28,10 @@ public class TcpConnector implements Connector {
 	private final InetSocketAddress serverAddress;
 	private SocketChannel socketChannel;
 	private Handler handler;
-	private boolean running;
+	private volatile boolean running;
 	private Processor[] processorArray;
 	private static final int processorSize = 3;
-	private int processCount;
+	private volatile int processCount;
 	private Worker worker;
 	private Session session;
 
@@ -53,24 +53,24 @@ public class TcpConnector implements Connector {
 				selector = Selector.open();
 				socketChannel.register(selector, SelectionKey.OP_CONNECT);
 				socketChannel.connect(serverAddress);
+				processorArray = new TcpProcessor[processorSize];
+				for (int i = 0; i < processorSize; ++i) {
+					processorArray[i] = new TcpProcessor();
+					processorArray[i].startup();
+				}
+				worker = new Worker();
+				ExecutorThreadPool.getExecutor().execute(worker);
+				logger.info("client has started up");
+				session = new TcpSession(socketChannel, handler);
+				nextProcessor().addNew(session);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			processorArray = new TcpProcessor[processorSize];
-			for (int i = 0; i < processorSize; ++i) {
-				processorArray[i] = new TcpProcessor();
-				processorArray[i].startup();
-			}
-			worker = new Worker();
-			ExecutorThreadPool.getExecutor().execute(worker);
-			logger.info("client has started up");
-			session = new TcpSession(socketChannel, handler);
-			nextProcessor().addNew(session);
 		}
 		return session;
 	}
 
-	public synchronized void shutdown() {
+	public synchronized void disconnect() {
 		if (!running) {
 			return;
 		}
@@ -135,4 +135,5 @@ public class TcpConnector implements Connector {
 		}
 
 	}
+
 }

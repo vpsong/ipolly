@@ -16,14 +16,14 @@ public class LoggingFilter extends FilterAdaptor {
 
 	@Override
 	public void read(Session session, Object message) {
-		logger.info("receive: " + String.valueOf(message));
+		logger.info("receive: " + message);
 		nextFilter().read(session, message);
 	}
 
 	@Override
 	public void send(Session session, Object message) {
-		logger.info("send: " + String.valueOf(message));
 		nextFilter().send(session, message);
+		logger.info("send: " + message);
 	}
 
 }

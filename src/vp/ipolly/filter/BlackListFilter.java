@@ -6,7 +6,6 @@ import java.net.SocketAddress;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Logger;
-
 import vp.ipolly.service.Session;
 
 public class BlackListFilter extends FilterAdaptor {
@@ -18,14 +17,14 @@ public class BlackListFilter extends FilterAdaptor {
 	private boolean inBlackList(Session session) {
 		SocketAddress remote = null;
 		try {
-			remote = session.getSocketChannel().getRemoteAddress();
+			remote = session.getRemoteAddress();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		if(remote != null && !blackList.contains(remote)) {
 			return false;
 		}
-		session.close();
+		session.scheduledClose();
 		logger.info("block socket " + remote + " in blackList...");
 		return true;
 	}

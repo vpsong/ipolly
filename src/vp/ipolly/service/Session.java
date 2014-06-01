@@ -1,11 +1,15 @@
 package vp.ipolly.service;
 
+import java.io.IOException;
+import java.net.SocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.Queue;
 
 import vp.ipolly.filter.FilterChain;
 import vp.ipolly.handler.Handler;
+import vp.ipolly.service.common.Data;
 
 /**
  * 
@@ -14,7 +18,7 @@ import vp.ipolly.handler.Handler;
  */
 public interface Session {
 
-	SocketChannel getSocketChannel();
+	void init();
 
 	Handler getHandler();
 
@@ -31,18 +35,20 @@ public interface Session {
 	boolean isReadable();
 
 	boolean isWritable();
-	
-	void write(Object obj);
-	
+
+	void write(Object msg);
+
 	boolean isConncted();
-	
+
 	void close();
-	
+
+	void scheduledClose();
+
 	FilterChain getFilterChain();
-	
+
 	long increaseReadBytes(int increment);
-    
-    long increaseWrittenBytes(int increment);
+
+	long increaseWrittenBytes(int increment);
 
 	long getReadBytes();
 
@@ -51,4 +57,12 @@ public interface Session {
 	long getLastReadTime();
 
 	long getLastWriteTime();
+
+	int read0(ByteBuffer buffer) throws IOException;
+
+	int write0(ByteBuffer buffer) throws IOException;
+
+	SocketAddress getRemoteAddress() throws IOException;
+
+	SessionState getStatus();
 }

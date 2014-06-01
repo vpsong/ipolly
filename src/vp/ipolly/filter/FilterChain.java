@@ -1,6 +1,7 @@
 package vp.ipolly.filter;
 
 import vp.ipolly.service.Session;
+import vp.ipolly.service.common.Data;
 
 
 /**
@@ -14,20 +15,28 @@ public class FilterChain {
 	private Filter headFilter;
 	
 	private FilterChain() {
-		headFilter = new ReadFilter();
+		headFilter = new IOFilter();
 		BlackListFilter blackListFilter = new BlackListFilter();
 		headFilter.setNextFilter(blackListFilter);
+		HeartbeatFilter heartbeatFilter = new HeartbeatFilter();
+		blackListFilter.setNextFilter(heartbeatFilter);
+		ProtocolFilter protocolFilter = new ProtocolFilter();
+		heartbeatFilter.setNextFilter(protocolFilter);
 		LoggingFilter loggingFilter = new LoggingFilter();
-		blackListFilter.setNextFilter(loggingFilter);
-		loggingFilter.setNextFilter(new WriteFilter());
+		protocolFilter.setNextFilter(loggingFilter);
+		loggingFilter.setNextFilter(new HandlerFilter());
 	}
 	
-	public void read(Session session, Object message) {
-		headFilter.read(session, message);
+	public void read(Session session) {
+		headFilter.read(session, null);
 	}
 	
 	public void send(Session session, Object message) {
 		headFilter.send(session, message);
+	}
+	
+	public void idle(Session session) {
+		headFilter.idle(session);
 	}
 	
 	public static FilterChain getChain() {

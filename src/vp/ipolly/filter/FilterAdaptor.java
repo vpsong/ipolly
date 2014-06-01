@@ -24,6 +24,13 @@ public class FilterAdaptor implements Filter {
 			nextFilter.send(session, message);
 		}
 	}
+	
+	@Override
+	public void idle(Session session) {
+		if (nextFilter != null) {
+			nextFilter.idle(session);
+		}
+	}
 
 	@Override
 	public Filter nextFilter() {

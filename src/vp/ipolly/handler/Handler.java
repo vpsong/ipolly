@@ -11,7 +11,7 @@ public interface Handler {
 
 	void accepted();
 	void connected();
-	void received(Session session, Object message) throws Exception;
-	void writed(Session session, Object message) throws Exception;
+	void received(Session session, Object message);
+	void writed(Session session, Object message);
 	
 }

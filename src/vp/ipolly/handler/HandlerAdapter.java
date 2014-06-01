@@ -13,11 +13,11 @@ public class HandlerAdapter implements Handler {
 	}
 
 	@Override
-	public void received(Session session, Object message) throws Exception {
+	public void received(Session session, Object message){
 	}
 
 	@Override
-	public void writed(Session session, Object message) throws Exception {
+	public void writed(Session session, Object message){
 	}
 
 }

@@ -28,10 +28,10 @@ public class TcpAcceptor implements Acceptor {
 	private Handler handler;
 	private Selector selector;
 	private ServerSocketChannel serverSocketChannel;
-	private boolean running;
+	private volatile boolean running;
 	private Processor[] processorArray;
 	private static final int processorSize = 3;
-	private int processCount;
+	private volatile int processCount;
 	private Worker worker;
 
 	public TcpAcceptor(int port, Handler handler) {
@@ -52,17 +52,17 @@ public class TcpAcceptor implements Acceptor {
 				selector = Selector.open();
 				serverSocketChannel.configureBlocking(false);
 				serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+				processorArray = new TcpProcessor[processorSize];
+				for (int i = 0; i < processorSize; ++i) {
+					processorArray[i] = new TcpProcessor();
+					processorArray[i].startup();
+				}
+				worker = new Worker();
+				ExecutorThreadPool.getExecutor().execute(worker);
+				logger.info("server has started up");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			processorArray = new TcpProcessor[processorSize];
-			for (int i = 0; i < processorSize; ++i) {
-				processorArray[i] = new TcpProcessor();
-				processorArray[i].startup();
-			}
-			worker = new Worker();
-			ExecutorThreadPool.getExecutor().execute(worker);
-			logger.info("server has started up");
 		}
 	}
 
