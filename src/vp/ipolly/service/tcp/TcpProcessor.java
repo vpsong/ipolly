@@ -31,7 +31,15 @@ public class TcpProcessor implements Processor {
 			.getLogger(TcpProcessor.class.getSimpleName());
 
 	private Selector selector;
+	
+	/**
+	 * 运行标志
+	 */
 	private boolean running;
+	
+	/**
+	 * processor实例名
+	 */
 	private String name;
 	private static final String NAME_PREFIX = "TcpProcessor_";
 	private Queue<Session> newSessionQueue = new ConcurrentLinkedQueue<Session>();
@@ -39,10 +47,18 @@ public class TcpProcessor implements Processor {
 	private Queue<Session> regWriteSessionQueue = new ConcurrentLinkedQueue<Session>();
 	private BlockingQueue<Session> writeSessionQueue = new LinkedBlockingQueue<Session>();
 	private BlockingQueue<Session> readSessionQueue = new LinkedBlockingQueue<Session>();
+	
+	/**
+	 * 最近一次空闲检查时间
+	 */
 	private long lastProcessIdleTime;
 	private Worker worker;
 	private Reader reader;
 	private Writer writer;
+	
+	/**
+	 * 实例数
+	 */
 	private static int instance_count;
 
 	public TcpProcessor() {

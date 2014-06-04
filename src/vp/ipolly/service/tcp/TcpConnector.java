@@ -4,7 +4,10 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -25,34 +28,39 @@ public class TcpConnector implements Connector {
 			.getLogger(TcpConnector.class.getSimpleName());
 
 	private Selector selector;
-	private final InetSocketAddress serverAddress;
+	private List<SocketChannel> channelList = new ArrayList<SocketChannel>(2);
 	private SocketChannel socketChannel;
 	private Handler handler;
 	private volatile boolean running;
 	private Processor[] processorArray;
+	/**
+	 * 默认起3个processor
+	 */
 	private static final int processorSize = 3;
+	/**
+	 * accept了多少个
+	 */
 	private volatile int processCount;
 	private Worker worker;
-	private Session session;
 
-	public TcpConnector(InetSocketAddress address, Handler handler) {
-		this.serverAddress = address;
+	// private Session session;
+
+	public TcpConnector(Handler handler) {
 		this.handler = handler;
-		try {
-			socketChannel = SocketChannel.open();
-			socketChannel.configureBlocking(false);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 
-	public synchronized Session connect() {
-		if (!running) {
-			running = true;
-			try {
-				selector = Selector.open();
-				socketChannel.register(selector, SelectionKey.OP_CONNECT);
-				socketChannel.connect(serverAddress);
+	public synchronized Session connect(InetSocketAddress serverAddress) {
+		Session session = null;
+		try {
+			selector = Selector.open();
+			socketChannel = SocketChannel.open();
+			socketChannel.configureBlocking(false);
+			socketChannel.connect(serverAddress);
+			channelList.add(socketChannel);
+			session = new TcpSession(socketChannel, handler);
+			socketChannel.register(selector, SelectionKey.OP_CONNECT, session);
+			if (!running) {
+				running = true;
 				processorArray = new TcpProcessor[processorSize];
 				for (int i = 0; i < processorSize; ++i) {
 					processorArray[i] = new TcpProcessor();
@@ -61,25 +69,23 @@ public class TcpConnector implements Connector {
 				worker = new Worker();
 				ExecutorThreadPool.getExecutor().execute(worker);
 				logger.info("client has started up");
-				session = new TcpSession(socketChannel, handler);
-				nextProcessor().addNew(session);
-			} catch (IOException e) {
-				e.printStackTrace();
 			}
+			nextProcessor().addNew(session);
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 		return session;
 	}
 
 	public synchronized void disconnect() {
-		if (!running) {
-			return;
-		}
 		running = false;
-		if (socketChannel != null) {
-			try {
-				socketChannel.close();
-			} catch (IOException e) {
-				e.printStackTrace();
+		for (SocketChannel socketChannel : channelList) {
+			if (socketChannel != null) {
+				try {
+					socketChannel.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 		if (selector != null) {
@@ -101,9 +107,8 @@ public class TcpConnector implements Connector {
 			try {
 				if (socketChannel.isConnectionPending()
 						&& socketChannel.finishConnect()) {
-					// nextProcessor().addNew(new TcpSession(socketChannel,
-					// handler));
-					handler.connected();
+					Session session = (Session) selectionKey.attachment();
+					handler.connected(session);
 				}
 			} catch (IOException e) {
 				e.printStackTrace();

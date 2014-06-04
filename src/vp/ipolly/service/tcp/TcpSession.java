@@ -26,6 +26,9 @@ public class TcpSession extends BaseSession {
 	private Logger logger = Logger
 			.getLogger(TcpSession.class.getSimpleName());
 
+	/**
+	 * 新建的session状态是OPENING
+	 */
 	private volatile SessionState status = SessionState.OPENING;
 	private SocketChannel socketChannel;
 	private Handler handler;

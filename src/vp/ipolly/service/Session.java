@@ -42,6 +42,9 @@ public interface Session {
 
 	void close();
 
+	/**
+	 * 放到关闭队列
+	 */
 	void scheduledClose();
 
 	FilterChain getFilterChain();

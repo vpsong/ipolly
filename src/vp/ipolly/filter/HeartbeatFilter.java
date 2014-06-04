@@ -16,10 +16,20 @@ public class HeartbeatFilter extends FilterAdaptor {
 	private final byte[] hbReq = new byte[] { -1, 0, -1 };
 	private final byte[] hbResp = new byte[] { -2, 0, -2 };
 
+	/**
+	 * 是不是心跳请求
+	 * @param msg
+	 * @return
+	 */
 	private boolean isHbRequest(Data msg) {
 		return CommonUtil.equal(hbReq, (byte[]) msg.getData());
 	}
 
+	/**
+	 * 是不是心跳响应
+	 * @param msg
+	 * @return
+	 */
 	private boolean isHbResponse(Data msg) {
 		return CommonUtil.equal(hbResp, (byte[]) msg.getData());
 	}

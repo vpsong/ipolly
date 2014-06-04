@@ -7,7 +7,7 @@ package vp.ipolly.service;
  */
 public interface Acceptor {
 	
-	void startup();
+	void bind(int port);
 
 	void shutdown();
 }

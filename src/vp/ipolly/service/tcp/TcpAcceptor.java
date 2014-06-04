@@ -7,12 +7,15 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
 import vp.ipolly.handler.Handler;
 import vp.ipolly.service.Acceptor;
 import vp.ipolly.service.Processor;
+import vp.ipolly.service.Session;
 import vp.ipolly.service.common.ExecutorThreadPool;
 
 /**
@@ -24,34 +27,41 @@ public class TcpAcceptor implements Acceptor {
 
 	private Logger logger = Logger.getLogger(TcpAcceptor.class.getSimpleName());
 
-	private final int port;
+	private List<ServerSocketChannel> channelList = new ArrayList<ServerSocketChannel>(
+			2);
 	private Handler handler;
 	private Selector selector;
-	private ServerSocketChannel serverSocketChannel;
+	/**
+	 * 运行标志
+	 */
 	private volatile boolean running;
 	private Processor[] processorArray;
+	/**
+	 * 默认起3个processor
+	 */
 	private static final int processorSize = 3;
+	/**
+	 * accept了多少个
+	 */
 	private volatile int processCount;
 	private Worker worker;
 
-	public TcpAcceptor(int port, Handler handler) {
-		this.port = port;
+	public TcpAcceptor(Handler handler) {
 		this.handler = handler;
-		try {
-			serverSocketChannel = ServerSocketChannel.open();
-			serverSocketChannel.socket().bind(new InetSocketAddress(port));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 
-	public synchronized void startup() {
-		if (!running) {
-			running = true;
-			try {
-				selector = Selector.open();
-				serverSocketChannel.configureBlocking(false);
-				serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+	public void bind(int port) {
+		try {
+			selector = Selector.open();
+			InetSocketAddress localAddress = new InetSocketAddress(port);
+			ServerSocketChannel serverSocketChannel = ServerSocketChannel
+					.open();
+			serverSocketChannel.socket().bind(localAddress);
+			serverSocketChannel.configureBlocking(false);
+			channelList.add(serverSocketChannel);
+			serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+			if (!running) {
+				running = true;
 				processorArray = new TcpProcessor[processorSize];
 				for (int i = 0; i < processorSize; ++i) {
 					processorArray[i] = new TcpProcessor();
@@ -60,22 +70,21 @@ public class TcpAcceptor implements Acceptor {
 				worker = new Worker();
 				ExecutorThreadPool.getExecutor().execute(worker);
 				logger.info("server has started up");
-			} catch (IOException e) {
-				e.printStackTrace();
 			}
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
 	public synchronized void shutdown() {
-		if (!running) {
-			return;
-		}
 		running = false;
-		if (serverSocketChannel != null) {
-			try {
-				serverSocketChannel.close();
-			} catch (IOException e) {
-				e.printStackTrace();
+		for (ServerSocketChannel serverSocketChannel : channelList) {
+			if (serverSocketChannel != null) {
+				try {
+					serverSocketChannel.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 		if (selector != null) {
@@ -93,12 +102,14 @@ public class TcpAcceptor implements Acceptor {
 	}
 
 	private void handle(SelectionKey selectionKey) {
-		SocketChannel socketChannel = null;
 		if (selectionKey.isAcceptable()) {
 			try {
-				socketChannel = serverSocketChannel.accept();
-				nextProcessor().addNew(new TcpSession(socketChannel, handler));
-				handler.accepted();
+				ServerSocketChannel serverSocketChannel = (ServerSocketChannel) selectionKey
+						.channel();
+				SocketChannel socketChannel = serverSocketChannel.accept();
+				Session session = new TcpSession(socketChannel, handler);
+				nextProcessor().addNew(session);
+				handler.accepted(session);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

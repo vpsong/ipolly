@@ -5,11 +5,11 @@ import vp.ipolly.service.Session;
 public class HandlerAdapter implements Handler {
 	
 	@Override
-	public void accepted() {
+	public void accepted(Session session) {
 	}
 	
 	@Override
-	public void connected() {
+	public void connected(Session session) {
 	}
 
 	@Override
@@ -17,7 +17,7 @@ public class HandlerAdapter implements Handler {
 	}
 
 	@Override
-	public void writed(Session session, Object message){
+	public void sent(Session session, Object message){
 	}
 
 }

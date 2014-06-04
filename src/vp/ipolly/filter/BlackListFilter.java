@@ -8,12 +8,22 @@ import java.util.Set;
 import java.util.logging.Logger;
 import vp.ipolly.service.Session;
 
+/**
+ * 黑名单过滤
+ * @author vpsong
+ *
+ */
 public class BlackListFilter extends FilterAdaptor {
 	
 	private Logger logger = Logger.getLogger(BlackListFilter.class.getSimpleName());
 	
 	private Set<InetSocketAddress> blackList = new HashSet<InetSocketAddress>();
 	
+	/**
+	 * 是否在黑名单里
+	 * @param session
+	 * @return
+	 */
 	private boolean inBlackList(Session session) {
 		SocketAddress remote = null;
 		try {

@@ -2,6 +2,11 @@ package vp.ipolly.protocol.impl;
 
 import java.io.Serializable;
 
+/**
+ * 默认消息格式
+ * @author vpsong
+ *
+ */
 public class DefaultMessage implements Serializable {
 	private static final long serialVersionUID = 1L;
 	

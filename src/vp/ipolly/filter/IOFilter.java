@@ -7,6 +7,11 @@ import java.nio.channels.SocketChannel;
 import vp.ipolly.service.Session;
 import vp.ipolly.service.common.Data;
 
+/**
+ * fiter链头，负责读写IO
+ * @author vpsong
+ *
+ */
 public class IOFilter extends FilterAdaptor {
 
 	private static final int DEFAULT_BYTEBUFFER_SIZE = 2048;

@@ -5,13 +5,16 @@ import vp.ipolly.service.Session;
 /**
  * 
  * @author vp.song
- *
+ * 
  */
 public interface Handler {
 
-	void accepted();
-	void connected();
+	void accepted(Session session);
+
+	void connected(Session session);
+
 	void received(Session session, Object message);
-	void writed(Session session, Object message);
-	
+
+	void sent(Session session, Object message);
+
 }

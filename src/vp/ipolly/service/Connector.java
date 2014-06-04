@@ -1,5 +1,7 @@
 package vp.ipolly.service;
 
+import java.net.InetSocketAddress;
+
 /**
  * 
  * @author vp.song
@@ -7,7 +9,7 @@ package vp.ipolly.service;
  */
 public interface Connector {
 	
-	Session connect();
+	Session connect(InetSocketAddress address);
 
 	void disconnect();
 }
